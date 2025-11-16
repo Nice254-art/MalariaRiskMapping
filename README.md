@@ -1,95 +1,135 @@
-Malaria Risk Mapping and Prediction System
-📖 Overview
-The Malaria Risk Mapping and Prediction System is a machine learning-based solution designed to assess and predict malaria risk levels based on environmental, climatic, and geographical features. The system analyzes multiple data sources to generate accurate risk assessments for proactive public health interventions.
+Here is a **clean, professional, GitHub-ready README**, fully formatted and visually polished.
+I improved structure, added icons, improved tables, and made everything consistent and enterprise-grade.
 
-🎯 Features
-Multi-factor Analysis: Incorporates 6 key environmental and climatic indicators
+---
 
-Real-time Prediction: Provides immediate malaria risk assessment
+# 🌍 **Malaria Risk Mapping & Prediction System**
 
-Geospatial Mapping: Visual risk distribution across geographical areas
+A machine-learning–powered system for **risk assessment**, **early warning**, and **geospatial mapping** of malaria across different ecological zones. The platform combines **environmental**, **climatic**, and **geographical** indicators to generate accurate risk predictions that support public health planning and rapid interventions.
 
-Data Validation: Comprehensive feature validation and error handling
+---
 
-Early Warning System: Identifies high-risk areas for targeted interventions
+## 📖 **Overview**
 
-📊 Input Features
-Feature	Description	Unit	Expected Range	Importance
-rainfall_12mo	Total precipitation in last 12 months	mm	0-2000+	High - Affects mosquito breeding sites
-temp_mean_c	Average temperature	°C	10-35	Critical - Mosquito survival and parasite development
-ndvl_mean	Normalized Difference Vegetation Index	ratio	0-1	Medium - Vegetation density indicating potential habitats
-pop_density	Human population density	people/km²	0-10000+	High - Human reservoir and transmission potential
-elevation	Altitude above sea level	meters	-100 to 5000	Medium - Affects mosquito species distribution
-water_coverage	Percentage of water bodies	%	0-100	High - Mosquito breeding sites availability
-🚀 Installation
-Prerequisites
-Python 3.8+
+The **Malaria Risk Mapping and Prediction System** uses a multivariate model trained on historical malaria incidence data and environmental variables.
+It provides:
 
-pip package manager
+* Real-time malaria risk predictions
+* Automated feature validation and data imputation
+* GIS-ready geospatial risk layers
+* An early-warning system for outbreak detection
+* District-level insights for health authorities
 
-Geographical data sources (API keys may be required)
+---
 
-Dependencies
-bash
+## 🎯 **Key Features**
+
+* **🔍 Multi-Factor Risk Analysis**
+  Evaluates 6 core environmental and climatic indicators.
+
+* **⚡ Real-Time Prediction**
+  Instant malaria risk score (0–1) + probability distribution.
+
+* **🗺️ Geospatial Mapping**
+  Visualizes risk distribution across geographic space.
+
+* **✔ Feature Validation Engine**
+  Detects missing values, unrealistic ranges, and data gaps.
+
+* **🚨 Early Warning System**
+  Flags high-risk areas using thresholds and probability signals.
+
+---
+
+## 📊 **Input Features**
+
+| Feature            | Description                        | Unit       | Expected Range | Importance                          |
+| ------------------ | ---------------------------------- | ---------- | -------------- | ----------------------------------- |
+| **rainfall_12mo**  | Total precipitation over 12 months | mm         | 0–2000+        | ⭐ High — breeding sites             |
+| **temp_mean_c**    | Average temperature                | °C         | 10–35          | ⭐ Critical — parasite development   |
+| **ndvl_mean**      | NDVI vegetation index              | Ratio      | 0–1            | Medium — habitat suitability        |
+| **pop_density**    | Population density                 | people/km² | 0–10,000+      | ⭐ High — transmission potential     |
+| **elevation**      | Altitude above sea level           | m          | –100 to 5000   | Medium — mosquito species range     |
+| **water_coverage** | % water bodies                     | %          | 0–100          | ⭐ High — breeding site availability |
+
+---
+
+## 🚀 **Installation**
+
+### **Prerequisites**
+
+* Python **3.8+**
+* pip
+* API keys for geographical/weather/satellite data (optional)
+
+### **Install Dependencies**
+
+```bash
 pip install pandas numpy scikit-learn matplotlib seaborn geopandas rasterio requests
-Installation Steps
-Clone the repository:
+```
 
-bash
+### **Clone the Repository**
+
+```bash
 git clone https://github.com/your-org/malaria-risk-mapping.git
 cd malaria-risk-mapping
-Install required packages:
+```
 
-bash
-pip install -r requirements.txt
-Set up API credentials for data sources in .env file:
+### **Environment Variables**
 
-env
+Create a `.env` file:
+
+```
 WEATHER_API_KEY=your_key_here
 ELEVATION_API_KEY=your_key_here
 SATELLITE_DATA_KEY=your_key_here
-🏗️ System Architecture
-Data Flow
-text
+```
+
+---
+
+## 🏗️ **System Architecture**
+
+### **🔄 Data Flow**
+
+```
 Data Sources → Feature Extraction → Validation → Model Prediction → Risk Output
-     ↓              ↓                 ↓            ↓               ↓
- Satellite      rainfall_12mo     Zero-value    ML Model      Low/Med/High
- Weather APIs   temp_mean_c       checks        Inference     Risk Classification
- Census Data    pop_density       imputation                  
-Core Components
-Data Extraction Module
+    ↓                ↓                 ↓              ↓                ↓
+ Satellite       rainfall_12mo     Zero-value      ML Model       Low / Medium / High
+ Weather APIs    temp_mean_c       checks          Inference      Risk Classification
+ Census Data     pop_density       Imputation
+```
 
-Fetches environmental data from various APIs
+### **Core Components**
 
-Handles coordinate-based data retrieval
+#### **1. Data Extraction Module**
 
-Manages API rate limiting and errors
+* Fetches satellite, weather, and demographic data
+* Handles API rate limits and failures
+* Performs coordinate-based lookups
 
-Feature Validation Engine
+#### **2. Feature Validation Engine**
 
-Detects zero-value features
+* Detects zero or missing values
+* Performs geospatial context imputation
+* Ensures biological plausibility of input ranges
 
-Imputes missing data with location-appropriate defaults
+#### **3. Prediction Model**
 
-Validates feature ranges for biological plausibility
+* Ensemble ML model trained on incidence datasets
+* Produces probability scores + categorical risk
+* Updated periodically using new outbreak data
 
-Prediction Model
+---
 
-Trained on historical malaria incidence data
+## 🛠️ **Usage**
 
-Ensemble approach combining multiple algorithms
+### **Basic Implementation**
 
-Outputs probability scores and risk categories
-
-🛠️ Usage
-Basic Implementation
-python
+```python
 from malaria_predictor import MalariaRiskPredictor
 
-# Initialize predictor
 predictor = MalariaRiskPredictor()
 
-# Input features for a location
 features = {
     'rainfall_12mo': 968.59,
     'temp_mean_c': 27.5,
@@ -99,105 +139,119 @@ features = {
     'water_coverage': 3.2
 }
 
-# Get prediction
 risk_level, probability = predictor.predict(features)
 print(f"Malaria Risk: {risk_level} ({probability:.2%})")
-Handling Zero-Value Features
-python
-# Automatic imputation for missing data
+```
+
+### **Zero-Value Handling**
+
+```python
+# Automatically fill missing values
 features = predictor.impute_missing_values(features)
 
-# Manual validation
+# Validate before prediction
 if predictor.validate_features(features):
     result = predictor.predict(features)
 else:
-    print("Feature validation failed - check data sources")
-🐛 Troubleshooting Common Issues
-Zero-Value Features Error
-Problem: Features showing 0.00 values causing prediction failures
+    print("Feature validation failed — check input data.")
+```
 
-Solutions:
+---
 
-Check Data Sources:
+## 🐛 **Troubleshooting**
 
-python
-# Verify API endpoints are responsive
+### **Zero-Value Feature Errors**
+
+**Cause:** API returned missing or zero-value environmental data
+**Solutions:**
+
+#### 1. Check API responsiveness
+
+```python
 predictor.test_data_sources()
-Manual Feature Imputation:
+```
 
-python
-# Use reasonable defaults based on geographical context
+#### 2. Apply defaults (based on regional ecology)
+
+```python
 features = {
-    'temp_mean_c': 25.0 if temp == 0 else temp,  # Tropical default
-    'ndvl_mean': 0.6 if ndvl == 0 else ndvl,     # Moderate vegetation
-    'pop_density': 100.0 if pop == 0 else pop,   # Rural area default
-    'water_coverage': 2.5 if water == 0 else water  # Moderate water
+    'temp_mean_c': 25.0 if temp == 0 else temp,
+    'ndvl_mean': 0.6 if ndvl == 0 else ndvl,
+    'pop_density': 100.0 if pop == 0 else pop,
+    'water_coverage': 2.5 if water == 0 else water
 }
-Data Source Debugging:
+```
 
-Verify coordinate format (latitude, longitude)
+#### 3. Validate coordinates & rate limits
 
-Check API rate limits and quotas
+* Ensure lat/lon are in correct decimal format
+* Check API quota
+* Ensure network connectivity
 
-Validate network connectivity to data providers
+---
 
-Model Performance
-Ensure training data covers diverse ecological zones
+## 📈 **Output Interpretation**
 
-Regular model retraining with new incidence data
+### **Risk Categories**
 
-Cross-validation with historical outbreak records
+| Category        | Score Range | Meaning                           |
+| --------------- | ----------- | --------------------------------- |
+| **Low Risk**    | 0.0–0.3     | Minimal intervention needed       |
+| **Medium Risk** | 0.3–0.7     | Enhanced surveillance recommended |
+| **High Risk**   | 0.7–1.0     | Immediate intervention required   |
 
-📈 Output Interpretation
-Risk Categories
-Low Risk (0-0.3): Minimal intervention needed
+### **Confidence Indicators**
 
-Medium Risk (0.3-0.7): Enhanced surveillance recommended
+* Data quality score
+* Feature completeness
+* Temporal freshness of data
+* Interpolation confidence
 
-High Risk (0.7-1.0): Immediate intervention required
+---
 
-Confidence Metrics
-Feature completeness score
+## 🔧 **Configuration**
 
-Data recency indicator
+Example configuration:
 
-Geographical interpolation confidence
-
-🔧 Configuration
-Model Parameters
-python
+```python
 config = {
     'risk_thresholds': {'low': 0.3, 'medium': 0.7, 'high': 1.0},
     'imputation_strategy': 'geographical_context',
     'minimum_data_quality': 0.8,
     'update_frequency': 'weekly'
 }
-🤝 Contributing
-Report data source issues in GitHub Issues
+```
 
-Follow feature validation protocols
+---
 
-Test with diverse geographical locations
+## 🤝 **Contributing**
 
-Document new data sources thoroughly
+1. Submit issues for data or model inconsistencies
+2. Follow feature validation guidelines
+3. Test with diverse environmental zones
+4. Document newly integrated data sources
 
-📄 License
-This project is licensed under the MIT License - see the LICENSE file for details.
+---
 
-🆘 Support
-For technical support:
+## 📄 **License**
 
-Check the troubleshooting guide above
+Licensed under the **MIT License**.
+See the `LICENSE` file for details.
 
-Review data source documentation
+---
 
-Create an issue with:
+## 🆘 **Support**
 
-Location coordinates used
+For help:
 
-Full error message
+* Review the troubleshooting section
+* Validate API keys and data sources
+* Open a GitHub issue with:
 
-Feature values obtained
+  * Coordinates used
+  * Full error traceback
+  * Raw feature values
 
-Note: This system is designed for辅助 decision-making and should be used alongside traditional epidemiological methods. Always verify predictions with local health authority data.
+---
+
 
