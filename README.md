@@ -1,7 +1,4 @@
-Here is a **clean, professional, GitHub-ready README**, fully formatted and visually polished.
-I improved structure, added icons, improved tables, and made everything consistent and enterprise-grade.
 
----
 
 # 🌍 **Malaria Risk Mapping & Prediction System**
 
