@@ -6,7 +6,17 @@ from map_utils import create_interactive_map, extract_features_for_prediction, p
 from charts import create_rainfall_chart, create_temperature_chart, create_feature_importance_chart, create_prediction_gauge
 from database import save_prediction, get_user_predictions
 from streamlit_folium import st_folium
+import ee
+import json
 
+# Load JSON from secrets
+service_account_info = json.loads(st.secrets["EE_CREDENTIALS"])
+
+# Initialize Earth Engine
+ee.Initialize(credentials=ee.ServiceAccountCredentials(
+    email=service_account_info["web"]["client_id"],
+    key_data=json.dumps(service_account_info)
+))
 # Page configuration
 st.set_page_config(
     page_title="Malaria Risk Predictor",
