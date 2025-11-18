@@ -6,6 +6,18 @@ A machine-learning–powered system for **risk assessment**, **early warning**, 
 
 ---
 
+## 🚀 **Live Demo**
+
+Experience the system in action! Our interactive web application allows you to explore malaria risk predictions and generate maps in real-time.
+
+🔗 **Live Demo Link:** [https://malaria2.streamlit.app/](https://malaria2.streamlit.app/)
+
+*   **Visualize Risk Maps:** See high-risk areas highlighted on an interactive map.
+*   **Run Predictions:** Input environmental data to get instant risk scores.
+*   **Explore Features:** Understand how different factors like rainfall and temperature influence the model's output.
+
+---
+
 ## 📖 **Overview**
 
 The **Malaria Risk Mapping and Prediction System** uses a multivariate model trained on historical malaria incidence data and environmental variables.
@@ -16,6 +28,24 @@ It provides:
 * GIS-ready geospatial risk layers
 * An early-warning system for outbreak detection
 * District-level insights for health authorities
+
+---
+
+## 🗃️ **Database & Model**
+
+The accuracy of our predictions is built on a foundation of robust, multi-source data.
+
+### **Data Sources**
+Our model is trained on and ingests data from the following primary sources:
+
+*   **Historical Malaria Incidence:** Lab-confirmed case data from health facilities and national surveillance systems, aggregated by district and season.
+*   **Climate & Weather:** Time-series data on precipitation and land surface temperature from satellite sources (e.g., CHIRPS, MODIS).
+*   **Environmental Metrics:** Vegetation indices (NDVI) and water body data derived from satellite imagery (e.g., Landsat, Sentinel).
+*   **Topographical Data:** Global elevation data (e.g., SRTM) to account for altitude-based mosquito habitat constraints.
+*   **Population Data:** Gridded population density estimates from sources like WorldPop.
+
+### **Model Training**
+The predictive model is an **ensemble machine learning model** (e.g., Random Forest or Gradient Boosting) trained on the relationship between the input features (see below) and historical malaria incidence rates. The model is periodically retrained with new outbreak data to maintain its accuracy over time.
 
 ---
 
@@ -62,7 +92,7 @@ It provides:
 ### **Install Dependencies**
 
 ```bash
-pip install pandas numpy scikit-learn matplotlib seaborn geopandas rasterio requests
+pip install pandas numpy scikit-learn matplotlib seaborn geopandas rasterio requests streamlit
 ```
 
 ### **Clone the Repository**
@@ -244,11 +274,8 @@ For help:
 * Review the troubleshooting section
 * Validate API keys and data sources
 * Open a GitHub issue with:
-
   * Coordinates used
   * Full error traceback
   * Raw feature values
 
 ---
-
-
