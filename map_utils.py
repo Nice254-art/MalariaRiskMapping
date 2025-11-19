@@ -10,10 +10,19 @@ from database import save_prediction
 from datetime import datetime, timedelta
 
 # Initialize Earth Engine
-try:
-    ee.Initialize(project='siol-degradation')
-except:
-    st.error("Please authenticate Earth Engine first")
+def init_ee():
+    try:
+        service_account = st.secrets["EE_ACCOUNT"]
+        key_json = json.loads(st.secrets["EE_KEY"])
+
+        credentials = ee.ServiceAccountCredentials(
+            email=service_account,
+            key_data=key_json
+        )
+        ee.Initialize(credentials)
+        return True, None
+    except Exception as e:
+        return False, str(e)
 
 def extract_features_for_prediction(lat, lon):
     """Extract features for a given location for prediction"""
