@@ -1,11 +1,14 @@
 # app.py
 import streamlit as st
+import ee
+import os
 import pandas as pd
 from auth import login_user, register_user, logout_user, check_auth
 from map_utils import create_interactive_map, extract_features_for_prediction, predict_malaria_risk, get_historical_data
 from charts import create_rainfall_chart, create_temperature_chart, create_feature_importance_chart, create_prediction_gauge
 from database import save_prediction, get_user_predictions
 from streamlit_folium import st_folium
+
 
 # Page configuration
 st.set_page_config(
