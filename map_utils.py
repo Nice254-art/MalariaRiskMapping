@@ -1,5 +1,6 @@
 # map_utils.py
 import ee
+import os
 import pandas as pd
 import joblib
 import json
