@@ -11,20 +11,12 @@ from database import save_prediction
 from datetime import datetime, timedelta
 
 # Initialize Earth Engine
-def init_ee():
-    try:
-        service_account = st.secrets["EE_ACCOUNT"]
-        key_json = json.loads(st.secrets["EE_KEY"])
+# Load service account credentials
+service_account = st.secrets["EE_ACCOUNT"]
+credentials = ee.ServiceAccountCredentials(service_account, key_data=st.secrets["EE_PRIVATE_KEY"])
 
-        credentials = ee.ServiceAccountCredentials(
-            email=service_account,
-            key_data=key_json
-        )
-        ee.Initialize(credentials)
-        return True, None
-    except Exception as e:
-        return False, str(e)
-
+# Initialize Earth Engine
+ee.Initialize(credentials)
 def extract_features_for_prediction(lat, lon):
     """Extract features for a given location for prediction"""
     try:
