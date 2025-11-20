@@ -10,13 +10,53 @@ import streamlit as st
 from database import save_prediction
 from datetime import datetime, timedelta
 
-# Initialize Earth Engine
-# Load service account credentials
-service_account = st.secrets["EE_ACCOUNT"]
-credentials = ee.ServiceAccountCredentials(service_account, key_data=st.secrets["EE_PRIVATE_KEY"])
+
+def initialize_earth_engine():
+    """Initialize Earth Engine using JSON service account key"""
+    try:
+        # Check if already initialized
+        if ee.data._credentials is not None:
+            return True
+            
+        # Load the full JSON from secrets
+        if "EE_SERVICE_ACCOUNT_JSON" in st.secrets:
+            # Use the full JSON key
+            credentials_dict = json.loads(st.secrets["EE_SERVICE_ACCOUNT_JSON"])
+            credentials = ee.ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict)
+        else:
+            # Fall back to individual components
+            service_account = st.secrets["EE_ACCOUNT"]
+            private_key = st.secrets["EE_PRIVATE_KEY"]
+            
+            # Clean up the private key
+            private_key = private_key.strip()
+            if private_key.startswith('"') and private_key.endswith('"'):
+                private_key = private_key[1:-1]
+            
+            # Replace escaped newlines with actual newlines
+            private_key = private_key.replace('\\n', '\n')
+            
+            credentials = ee.ServiceAccountCredentials(service_account, key_data=private_key)
+        
+        # Initialize Earth Engine
+        ee.Initialize(credentials)
+        
+        # Test connection
+        try:
+            test_image = ee.Image('LANDSAT/LC08/C01/T1_SR/LC08_044034_20140318')
+            band_names = test_image.bandNames().getInfo()
+            st.success("✅ Earth Engine initialized successfully!")
+            return True
+        except Exception as test_error:
+            st.error(f"❌ Earth Engine test failed: {test_error}")
+            return False
+            
+    except Exception as e:
+        st.error(f"❌ Failed to initialize Earth Engine: {str(e)}")
+        return False
 
 # Initialize Earth Engine
-ee.Initialize(credentials)
+ee_initialized = initialize_earth_engine()
 def extract_features_for_prediction(lat, lon):
     """Extract features for a given location for prediction"""
     try:
