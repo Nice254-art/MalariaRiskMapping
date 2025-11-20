@@ -1,6 +1,5 @@
 # map_utils.py
 import ee
-import os
 import pandas as pd
 import joblib
 import json
@@ -10,109 +9,14 @@ import streamlit as st
 from database import save_prediction
 from datetime import datetime, timedelta
 
-def initialize_earth_engine():
-    """Initialize Earth Engine with multiple authentication methods"""
-    
-    # Check if already initialized
-    try:
-        if ee.data._credentials is not None:
-            # Test if the initialized credentials are still valid
-            ee.Image('LANDSAT/LC08/C01/T1_SR/LC08_044034_20140318').bandNames().getInfo()
-            st.success("✅ Earth Engine already initialized and working!")
-            return True
-    except:
-        # Not properly initialized, continue with initialization
-        pass
-    
-    try:
-        # Method 1: Try service account authentication first
-        st.info("🔄 Initializing Earth Engine...")
-        
-        # Get credentials from secrets
-        service_account_email = st.secrets.get("EE_ACCOUNT")
-        private_key = st.secrets.get("EE_PRIVATE_KEY")
-        
-        if not service_account_email or not private_key:
-            st.error("❌ Earth Engine credentials not found in secrets")
-            return False
-        
-        # Clean the private key
-        private_key = private_key.strip()
-        
-        # Remove extra quotes if present
-        if private_key.startswith('"') and private_key.endswith('"'):
-            private_key = private_key[1:-1]
-        
-        # Ensure proper line endings
-        private_key = private_key.replace('\\n', '\n')
-        
-        # Ensure the key has proper BEGIN/END markers
-        if not private_key.startswith('-----BEGIN PRIVATE KEY-----'):
-            private_key = '-----BEGIN PRIVATE KEY-----\n' + private_key
-        if not private_key.endswith('-----END PRIVATE KEY-----'):
-            private_key = private_key + '\n-----END PRIVATE KEY-----'
-        
-        # Create credentials
-        credentials = ee.ServiceAccountCredentials(service_account_email, key_data=private_key)
-        
-        # Initialize Earth Engine
-        ee.Initialize(credentials)
-        
-        # Test the connection
-        try:
-            # Simple test - get a small image collection
-            test_image = ee.Image('LANDSAT/LC08/C01/T1_SR/LC08_044034_20140318')
-            band_names = test_image.bandNames().getInfo()
-            st.success(f"✅ Earth Engine initialized successfully! Available bands: {len(band_names)}")
-            return True
-        except Exception as test_error:
-            st.error(f"❌ Earth Engine test failed: {test_error}")
-            return False
-            
-    except Exception as e:
-        st.error(f"❌ Failed to initialize Earth Engine: {str(e)}")
-        
-        # Provide helpful debugging information
-        st.info("""
-        **Troubleshooting steps:**
-        1. Verify your service account email is correct
-        2. Ensure the private key is properly formatted with correct line breaks
-        3. Check that the service account has Earth Engine access
-        4. Verify your project is enabled for Earth Engine API
-        """)
-        return False
-
-# Initialize Earth Engine at module load
-ee_initialized = initialize_earth_engine()
-
-def check_ee_initialized():
-    """Check if Earth Engine is properly initialized"""
-    try:
-        if ee.data._credentials is None:
-            return False
-        # Test with a simple operation
-        ee.Image(1).getInfo()
-        return True
-    except:
-        return False
-
-def create_interactive_map():
-    """Create an interactive Folium map"""
-    # Start with a default location (center of Africa)
-    m = folium.Map(location=[0, 20], zoom_start=3)
-    
-    # Add click functionality
-    m.add_child(folium.LatLngPopup())
-    
-    return m
+# Initialize Earth Engine
+try:
+    ee.Initialize(project='siol-degradation')
+except:
+    st.error("Please authenticate Earth Engine first")
 
 def extract_features_for_prediction(lat, lon):
     """Extract features for a given location for prediction"""
-    
-    if not check_ee_initialized():
-        st.error("❌ Earth Engine not initialized. Cannot extract features.")
-        return None
-        
     try:
         point = ee.Geometry.Point([lon, lat]).buffer(5000)  # 5km buffer
         
@@ -235,18 +139,18 @@ def predict_malaria_risk(features):
         # Return default values if model fails
         return "Medium", 0.5, [0.33, 0.33, 0.34]
 
+def create_interactive_map():
+    """Create an interactive Folium map"""
+    # Start with a default location (center of Africa)
+    m = folium.Map(location=[0, 20], zoom_start=3)
+    
+    # Add click functionality
+    m.add_child(folium.LatLngPopup())
+    
+    return m
+
 def get_historical_data(lat, lon):
     """Get historical climate data for charts"""
-    
-    if not check_ee_initialized():
-        st.error("❌ Earth Engine not initialized. Cannot get historical data.")
-        # Return sample data if EE fails
-        return {
-            'years': [2019, 2020, 2021, 2022, 2023],
-            'rainfall': [800, 850, 780, 920, 870],
-            'temperature': [25, 26, 24, 27, 25]
-        }
-        
     try:
         point = ee.Geometry.Point([lon, lat])
         
@@ -300,20 +204,3 @@ def get_historical_data(lat, lon):
             'rainfall': [800, 850, 780, 920, 870],
             'temperature': [25, 26, 24, 27, 25]
         }
-
-# Add this function to your map_utils.py for better mobile experience
-def create_mobile_friendly_map():
-    """Create a mobile-optimized map"""
-    import folium
-    
-    # Center on Africa with mobile-appropriate zoom
-    m = folium.Map(
-        location=[6.3690, 20.3983], 
-        zoom_start=3,
-        tiles='CartoDB positron'  # Lighter tiles for mobile
-    )
-    
-    # Add mobile-friendly popups
-    m.add_child(folium.LatLngPopup())
-    
-    return m
