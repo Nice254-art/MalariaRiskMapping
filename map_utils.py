@@ -300,3 +300,20 @@ def get_historical_data(lat, lon):
             'rainfall': [800, 850, 780, 920, 870],
             'temperature': [25, 26, 24, 27, 25]
         }
+
+# Add this function to your map_utils.py for better mobile experience
+def create_mobile_friendly_map():
+    """Create a mobile-optimized map"""
+    import folium
+    
+    # Center on Africa with mobile-appropriate zoom
+    m = folium.Map(
+        location=[6.3690, 20.3983], 
+        zoom_start=3,
+        tiles='CartoDB positron'  # Lighter tiles for mobile
+    )
+    
+    # Add mobile-friendly popups
+    m.add_child(folium.LatLngPopup())
+    
+    return m
