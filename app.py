@@ -1,276 +1,287 @@
-# app.py
+# app.py - Mobile Responsive FITSIS Malaria App
 import streamlit as st
-import ee
 import os
 import pandas as pd
 from auth import login_user, register_user, logout_user, check_auth
-from map_utils import create_interactive_map, extract_features_for_prediction, predict_malaria_risk, get_historical_data
-from charts import create_rainfall_chart, create_temperature_chart, create_feature_importance_chart, create_prediction_gauge
+from map_utils import create_interactive_map, extract_features_for_prediction, predict_malaria_risk
+from charts import create_rainfall_chart, create_temperature_chart, create_risk_chart
 from database import save_prediction, get_user_predictions
 from streamlit_folium import st_folium
 
-
-# Page configuration
+# Set page configuration for mobile responsiveness
 st.set_page_config(
-    page_title="Malaria Risk Predictor",
+    page_title="FITSIS Malaria Risk Mapping",
     page_icon="🦟",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"  # Better for mobile
 )
 
+# Add custom CSS for mobile responsiveness
+st.markdown("""
+<style>
+    /* Mobile-first responsive design */
+    @media (max-width: 768px) {
+        .main > div {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        
+        /* Stack columns on mobile */
+        [data-testid="column"] {
+            width: 100% !important;
+            min-width: 100% !important;
+        }
+        
+        /* Adjust map height for mobile */
+        .folium-map {
+            height: 300px !important;
+        }
+        
+        /* Smaller text on mobile */
+        h1 {
+            font-size: 1.5rem !important;
+        }
+        
+        h2 {
+            font-size: 1.3rem !important;
+        }
+        
+        h3 {
+            font-size: 1.1rem !important;
+        }
+        
+        /* Adjust button sizes */
+        .stButton > button {
+            width: 100% !important;
+            margin: 0.2rem 0;
+        }
+        
+        /* Compact form fields */
+        .stTextInput > div > div > input,
+        .stNumberInput > div > div > input,
+        .stDateInput > div > div > input {
+            font-size: 16px !important; /* Prevents zoom on iOS */
+        }
+    }
+    
+    /* Tablet adjustments */
+    @media (min-width: 769px) and (max-width: 1024px) {
+        .folium-map {
+            height: 400px !important;
+        }
+    }
+    
+    /* Desktop adjustments */
+    @media (min-width: 1025px) {
+        .folium-map {
+            height: 500px !important;
+        }
+    }
+    
+    /* General mobile-friendly styles */
+    .mobile-friendly {
+        padding: 1rem;
+    }
+    
+    .risk-card {
+        border-radius: 10px;
+        padding: 1rem;
+        margin: 0.5rem 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .risk-low {
+        background-color: #d4edda;
+        border-left: 5px solid #28a745;
+    }
+    
+    .risk-medium {
+        background-color: #fff3cd;
+        border-left: 5px solid #ffc107;
+    }
+    
+    .risk-high {
+        background-color: #f8d7da;
+        border-left: 5px solid #dc3545;
+    }
+    
+    /* Compact data display for mobile */
+    .compact-data {
+        font-size: 0.9rem;
+        line-height: 1.2;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 def main():
-    # Custom CSS
-    st.markdown("""
-        <style>
-        .main-header {
-            font-size: 3rem;
-            color: #2E86AB;
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        .risk-high {
-            background-color: #ff6b6b;
-            padding: 10px;
-            border-radius: 5px;
-            color: white;
-            font-weight: bold;
-        }
-        .risk-medium {
-            background-color: #ffd93d;
-            padding: 10px;
-            border-radius: 5px;
-            color: black;
-            font-weight: bold;
-        }
-        .risk-low {
-            background-color: #6bcf7f;
-            padding: 10px;
-            border-radius: 5px;
-            color: white;
-            font-weight: bold;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
-    # Header
-    st.markdown('<h1 class="main-header">🦟 Malaria Risk Predictor</h1>', unsafe_allow_html=True)
-
     # Check authentication
     if not check_auth():
-        show_auth_pages()
-    else:
-        show_main_app()
-
-def show_auth_pages():
-    """Show login/registration pages"""
-    tab1, tab2 = st.tabs(["Login", "Register"])
+        return
     
-    with tab1:
-        login_user()
-    
-    with tab2:
-        register_user()
-
-def show_main_app():
-    """Show the main application after login"""
-    # Sidebar
-    with st.sidebar:
-        st.title(f"Welcome, {st.session_state.username}! 👋")
-        st.markdown("---")
-        
-        # Navigation with unique key
-        page = st.radio("Navigate to:", 
-                       ["Map Predictor", "Prediction History", "Account Info"],
-                       key="main_navigation")
-        
-        st.markdown("---")
-        if st.button("Logout", key="logout_button"):
-            logout_user()
-    
-    # Main content based on navigation
-    if page == "Map Predictor":
-        show_map_predictor()
-    elif page == "Prediction History":
-        show_prediction_history()
-    elif page == "Account Info":
-        show_account_info()
-
-def show_map_predictor():
-    """Show the interactive map and prediction interface"""
-    st.header("🌍 Interactive Malaria Risk Map")
-    
-    col1, col2 = st.columns([2, 1])
-    
-    with col1:
-        st.subheader("Click on the map to select a location")
-        
-        # Create and display map with unique key
-        m = create_interactive_map()
-        map_data = st_folium(m, width=700, height=500, key="main_map")
-        
-        # Handle map clicks
-        if map_data and map_data.get('last_clicked'):
-            lat = map_data['last_clicked']['lat']
-            lng = map_data['last_clicked']['lng']
-            
-            st.success(f"📍 Selected location: {lat:.4f}, {lng:.4f}")
-            
-            # Process the selected location
-            process_location_prediction(lat, lng)
-    
+    # Mobile-friendly header
+    col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.subheader("How to Use:")
-        st.markdown("""
-        1. **Zoom** to your area of interest
-        2. **Click** on any location on the map
-        3. **Wait** for feature extraction
-        4. **View** prediction results and charts
-        
-        The system will analyze:
-        - 🌧️ Rainfall patterns
-        - 🌡️ Temperature data  
-        - 🌿 Vegetation (NDVI)
-        - 👥 Population density
-        - 🏔️ Elevation
-        - 💧 Water bodies
-        """)
-
-def process_location_prediction(lat, lng):
-    """Process prediction for a selected location"""
-    with st.spinner("🔄 Extracting environmental features..."):
-        features = extract_features_for_prediction(lat, lng)
+        st.title("🦟 FITSIS Malaria Risk Mapping")
+        st.markdown("**Mobile-Friendly Malaria Risk Assessment System**")
     
-    if features:
-        # Display features with unique key
-        st.subheader("📊 Extracted Features")
-        feature_df = pd.DataFrame.from_dict(features, orient='index', columns=['Value'])
-        st.dataframe(feature_df.style.format("{:.2f}"), key="features_table")
-        
-        # Make prediction
-        with st.spinner("🤖 Analyzing malaria risk..."):
-            prediction, confidence, probabilities = predict_malaria_risk(features)
-        
-        if prediction:
-            # Display prediction result
-            st.subheader("🎯 Prediction Result")
-            
-            # Risk indicator
-            risk_class = f"risk-{prediction.lower()}"
-            st.markdown(f'<div class="{risk_class}">Malaria Risk: {prediction}</div>', unsafe_allow_html=True)
-            
-            # Confidence gauge with unique key
-            gauge_chart = create_prediction_gauge(prediction, confidence)
-            st.plotly_chart(gauge_chart, use_container_width=True, key="prediction_gauge")
-            
-            # Save prediction to history
-            import json
-            features_json = json.dumps(features)
-            save_prediction(st.session_state.user_id, lat, lng, prediction, confidence, features_json)
-            
-            # Show historical data charts
-            st.subheader("📈 Historical Climate Data")
-            historical_data = get_historical_data(lat, lng)
-            
-            if historical_data:
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    rainfall_chart = create_rainfall_chart(historical_data)
-                    st.plotly_chart(rainfall_chart, use_container_width=True, key="rainfall_chart")
-                
-                with col2:
-                    temp_chart = create_temperature_chart(historical_data)
-                    st.plotly_chart(temp_chart, use_container_width=True, key="temperature_chart")
-                
-                # Feature importance chart with unique key
-                feature_chart = create_feature_importance_chart(features)
-                st.plotly_chart(feature_chart, use_container_width=True, key="feature_chart")
-            
-            # Risk interpretation
-            st.subheader("🔍 Risk Interpretation")
-            if prediction == "High":
-                st.warning("""
-                **High Risk Area** - Consider:
-                - Implementing mosquito control measures
-                - Public health awareness campaigns
-                - Regular monitoring and surveillance
-                - Preventive medication if traveling
-                """)
-            elif prediction == "Medium":
-                st.info("""
-                **Medium Risk Area** - Consider:
-                - Seasonal monitoring
-                - Basic preventive measures
-                - Community awareness programs
-                """)
-            else:
-                st.success("""
-                **Low Risk Area** - Maintain:
-                - Basic surveillance
-                - Preparedness for climate changes
-                - Public health infrastructure
-                """)
-
-def show_prediction_history():
-    """Show user's prediction history"""
-    st.header("📋 Prediction History")
+    # Horizontal rule for separation
+    st.markdown("---")
     
-    predictions = get_user_predictions(st.session_state.user_id)
+    # Main content area with responsive layout
+    st.header("📍 Select Location for Risk Assessment")
     
-    if not predictions:
-        st.info("No predictions made yet. Go to the map and click on locations to make predictions!")
-    else:
-        # Create dataframe from predictions
-        history_data = []
-        for pred in predictions:
-            history_data.append({
-                'Date': pred[7],
-                'Latitude': pred[2],
-                'Longitude': pred[3],
-                'Prediction': pred[4],
-                'Confidence': f"{pred[5]*100:.1f}%"
-            })
-        
-        df = pd.DataFrame(history_data)
-        st.dataframe(df, use_container_width=True, key="history_table")
-        
-        # Show some statistics - REMOVE THE 'key' PARAMETERS
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("Total Predictions", len(predictions))  # ✅ Fixed
-        with col2:
-            high_risk = len([p for p in predictions if p[4] == 'High'])
-            st.metric("High Risk Areas", high_risk)  # ✅ Fixed
-        with col3:
-            avg_confidence = sum([p[5] for p in predictions]) / len(predictions)
-            st.metric("Average Confidence", f"{avg_confidence*100:.1f}%")  # ✅ Fixed
-            
-def show_account_info():
-    """Show user account information"""
-    st.header("👤 Account Information")
+    # Map section - responsive
+    st.subheader("Interactive Map")
+    st.markdown("Tap on the map below to select a location for malaria risk analysis")
     
+    # Create map with responsive height
+    m = create_interactive_map()
+    
+    # Display map - this will be responsive based on our CSS
+    map_data = st_folium(m, width=None, height=400)  # Height will be overridden by CSS
+    
+    # Location input section - responsive columns
+    st.subheader("Location Details")
+    
+    # Use columns that stack on mobile
     col1, col2 = st.columns(2)
     
     with col1:
-        st.subheader("Profile")
-        st.write(f"**Username:** {st.session_state.username}")
-        st.write(f"**User ID:** {st.session_state.user_id}")
+        lat = st.number_input(
+            "Latitude", 
+            min_value=-90.0, 
+            max_value=90.0, 
+            value=0.0,
+            help="Enter latitude or click on map"
+        )
         
-        # Get prediction stats
-        predictions = get_user_predictions(st.session_state.user_id)
-        st.write(f"**Predictions Made:** {len(predictions)}")
-    
     with col2:
-        st.subheader("About Malaria Predictor")
-        st.markdown("""
-        This app uses machine learning to predict malaria risk based on:
+        lon = st.number_input(
+            "Longitude", 
+            min_value=-180.0, 
+            max_value=180.0, 
+            value=20.0,
+            help="Enter longitude or click on map"
+        )
+    
+    # Update coordinates if user clicked on map
+    if map_data and map_data.get("last_clicked"):
+        lat = map_data["last_clicked"]["lat"]
+        lon = map_data["last_clicked"]["lng"]
+        st.success(f"📍 Location selected: {lat:.4f}, {lon:.4f}")
+    
+    # Analysis date - full width on mobile
+    analysis_date = st.date_input(
+        "Analysis Date",
+        value=pd.to_datetime("today"),
+        help="Select date for malaria risk assessment"
+    )
+    
+    # Risk assessment button - full width on mobile
+    st.markdown("---")
+    st.subheader("🦟 Malaria Risk Analysis")
+    
+    if st.button("🔍 Assess Malaria Risk", use_container_width=True):
+        with st.spinner("Analyzing environmental factors..."):
+            # Extract features
+            features = extract_features_for_prediction(lat, lon)
+            
+            if features:
+                # Make prediction
+                prediction, confidence, probabilities = predict_malaria_risk(features)
+                
+                # Display risk results in mobile-friendly cards
+                st.markdown("### 📊 Risk Assessment Results")
+                
+                # Risk level card
+                risk_class = f"risk-{prediction.lower()}"
+                st.markdown(f"""
+                <div class="risk-card {risk_class}">
+                    <h4>Malaria Risk Level: {prediction}</h4>
+                    <p><strong>Confidence:</strong> {confidence:.1%}</p>
+                    <p><strong>Location:</strong> {lat:.4f}, {lon:.4f}</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Risk factors in compact format
+                st.markdown("### 🔍 Environmental Risk Factors")
+                
+                # Use columns that stack on mobile
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.metric("🌧️ Rainfall", f"{features.get('rainfall_12mo', 0):.1f} mm")
+                    st.metric("🌡️ Temperature", f"{features.get('temp_mean_c', 0):.1f}°C")
+                    st.metric("🌿 NDVI", f"{features.get('ndvi_mean', 0):.3f}")
+                
+                with col2:
+                    st.metric("👥 Population", f"{features.get('pop_density', 0):.0f}/km²")
+                    st.metric("🏔️ Elevation", f"{features.get('elevation', 0):.0f} m")
+                    st.metric("💧 Water Coverage", f"{features.get('water_coverage', 0):.1f}%")
+                
+                # Charts section - responsive
+                st.markdown("### 📈 Historical Trends")
+                
+                # Get historical data
+                from map_utils import get_historical_data
+                historical_data = get_historical_data(lat, lon)
+                
+                # Display charts in responsive layout
+                tab1, tab2, tab3 = st.tabs(["🌧️ Rainfall", "🌡️ Temperature", "📊 Risk Distribution"])
+                
+                with tab1:
+                    st.plotly_chart(create_rainfall_chart(historical_data), use_container_width=True)
+                
+                with tab2:
+                    st.plotly_chart(create_temperature_chart(historical_data), use_container_width=True)
+                
+                with tab3:
+                    st.plotly_chart(create_risk_chart(probabilities, prediction), use_container_width=True)
+                
+                # Save prediction
+                if st.session_state.get('user'):
+                    save_prediction(
+                        st.session_state.user['id'],
+                        lat, lon,
+                        prediction,
+                        confidence,
+                        features
+                    )
+                    st.success("✅ Prediction saved to your history")
+    
+    # User predictions history - mobile optimized
+    st.markdown("---")
+    st.subheader("📋 Your Prediction History")
+    
+    if st.session_state.get('user'):
+        user_predictions = get_user_predictions(st.session_state.user['id'])
         
-        - **Environmental factors**: Rainfall, temperature, vegetation
-        - **Geographic features**: Elevation, water bodies
-        - **Human factors**: Population density
-        
-        The model was trained on global malaria incidence data and environmental datasets from Google Earth Engine.
-        """)
+        if user_predictions:
+            # Display in a mobile-friendly table
+            df = pd.DataFrame(user_predictions)
+            st.dataframe(
+                df[['latitude', 'longitude', 'prediction', 'confidence', 'created_at']],
+                use_container_width=True
+            )
+        else:
+            st.info("No predictions yet. Analyze a location to see your history here.")
+    
+    # Footer with mobile-friendly layout
+    st.markdown("---")
+    footer_col1, footer_col2, footer_col3 = st.columns(3)
+    
+    with footer_col1:
+        st.markdown("**FITSIS**")
+        st.markdown("Malaria Risk Mapping")
+    
+    with footer_col2:
+        st.markdown("**Need Help?**")
+        st.markdown("📧 Contact Support")
+    
+    with footer_col3:
+        if st.button("🚪 Logout", use_container_width=True):
+            logout_user()
+            st.rerun()
 
 if __name__ == "__main__":
     main()
