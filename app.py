@@ -9,7 +9,7 @@ from streamlit_folium import st_folium
 
 # Mobile-first page configuration
 st.set_page_config(
-    page_title="FITSIS Malaria Risk Predictor",
+    page_title="Malaria Risk Predictor",
     page_icon="🦟",
     layout="wide",
     initial_sidebar_state="collapsed"  # Better for mobile
@@ -169,7 +169,7 @@ st.markdown("""
 
 def main():
     # Header with responsive design
-    st.markdown('<h1 class="main-header">🦟 FITSIS Malaria Risk Predictor</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">🦟 Malaria Risk Predictor</h1>', unsafe_allow_html=True)
 
     # Check authentication
     if not check_auth():
