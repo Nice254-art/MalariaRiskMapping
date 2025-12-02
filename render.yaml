@@ -1,0 +1,29 @@
+services:
+  # Backend API Service
+  - type: web
+    name: malaria-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.0
+      - key: EE_SERVICE_ACCOUNT
+        sync: false
+      - key: EE_PRIVATE_KEY
+        sync: false
+
+  # Frontend Streamlit Service
+  - type: web
+    name: malaria-ui
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run app.py --server.port $PORT --server.address 0.0.0.0
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.0
+      - key: API_URL
+        fromService:
+          type: web
+          name: malaria-api
+          property: url
